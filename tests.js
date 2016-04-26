@@ -39,6 +39,27 @@ function createChromosome() {
   this.chromosome = new Genometry.Chromosome([triangle]);
 }
 
+function createChromosomeWithBigTriangle() {
+  var triangle = new Genometry.Triangle({
+    color: {
+      value: 0xff0000,
+    },
+    vertex1: {
+      x: 0,
+      y: 0,
+    },
+    vertex2: {
+      x: 10,
+      y: 10,
+    },
+    vertex3: {
+      x: 20,
+      y: 0,
+    },
+  });
+  this.chromosome = new Genometry.Chromosome([triangle]);
+}
+
 function createBigTriangle() {
   this.triangle = new Genometry.Triangle({
     color: {
@@ -227,10 +248,28 @@ QUnit.test( "triangle painter test", function(assert) {
   document.body.appendChild(canvas);
   canvas.width = 100;
   canvas.height = 100;
-  var painter = Genometry.Painter(canvas);
+  var painter = Genometry.TrianglePainter(canvas);
   painter.paint(this.triangle);
   var canvasCondition = canvas.getContext('2d').getImageData(5, 0, 1, 1).data[0] == 255;
   assert.ok(canvasCondition, "Triangle has been painted on canvas!");
+  canvasCondition = canvas.getContext('2d').getImageData(10, 10, 1, 1).data[0] == 0;
+  assert.ok(canvasCondition, "Nothing else has been painted on canvas!");
+  document.body.removeChild(canvas);
+});
+
+QUnit.module("chromosome painter");
+
+QUnit.test( "chromosome painter test", function(assert) {
+  createChromosomeWithBigTriangle.call(this);
+  this.chromosome.triangles()[0].color(0).value = 0xff0000;
+  var canvas = document.createElement("canvas");
+  document.body.appendChild(canvas);
+  canvas.width = 100;
+  canvas.height = 100;
+  var painter = Genometry.ChromosomePainter(canvas);
+  painter.paint(this.chromosome);
+  var canvasCondition = canvas.getContext('2d').getImageData(5, 0, 1, 1).data[0] == 255;
+  assert.ok(canvasCondition, "Chromosome has been painted on canvas!");
   canvasCondition = canvas.getContext('2d').getImageData(10, 10, 1, 1).data[0] == 0;
   assert.ok(canvasCondition, "Nothing else has been painted on canvas!");
   document.body.removeChild(canvas);

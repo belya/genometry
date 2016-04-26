@@ -4,6 +4,11 @@
   <title>Genometry</title>
 </head>
 <body>
+<a onclick="start();">Click!</a>
+<canvas id="input_canvas"></canvas>
+<canvas id="output_canvas"></canvas>
+<script src="genetic/genetic.js"></script>
+<script src="genometry.js"></script>
 <script type="text/javascript">
   var input = input_canvas;
   var output = output_canvas;
@@ -12,7 +17,7 @@
   var mutator = Genometry.ChromosomeMutator();
   var crossover = Genometry.ChromosomeCrossover();
   var counter = Genometry.ErrorCounter(input);
-  var painter = Genometry.Painter(output);
+  var painter = Genometry.ChromosomePainter(output);
 
   var genetic = Genetic.create();
   genetic.optimize = Genetic.Optimize.Maximize;
@@ -23,34 +28,54 @@
     return Genometry.Utils.randomChromosome(width, height);
   };
 
-  genetic.mutate = function(entity) {
-    for(var i = 0; i < entity.length; i++)
-      mutator.mutate(entity[i]);
-    return entity
+  genetic.mutate = function(chromosome) {
+    mutator.mutate(chromosome);
+    //WTF
+    return chromosome;
   };
 
   genetic.crossover = function(mother, father) {
-    return [];
+    return [crossover.cross(mother, father)];
   };
 
-  genetic.fitness = function(entity) {
-    var fitness = 0;
-    return fitness;
+  genetic.fitness = function(chromosome) {
+    painter.paint(chromosome);
+    return counter.count(output);
   };
 
   genetic.generation = function(pop, generation, stats) {
-    // stop running once we've reached the solution
-    return true;
   };
 
   genetic.notification = function(pop, generation, stats, isFinished) {
-    alert("See!");
+    console.log(generation);
+    if (isFinished)
+      alert("See!");
   };
 
-  window.onload = function() {
-    loadImage();
-    evolve();
-  };
+  function start() {
+    var imageObj = new Image();
+    var context = input.getContext('2d');
+    imageObj.onload = function() {
+      context.drawImage(this, 0, 0);
+      evolve();
+    };
+    imageObj.src = 'https://scontent-waw1-1.xx.fbcdn.net/hphotos-xpt1/v/t1.0-9/13077068_972541292842877_6281656254343451010_n.jpg?oh=d3b2cd8ec8ae5d56ad1aa71d5c1ff737&oe=57AF47CB';
+  }
+
+  function evolve() {
+    var config = {
+      iterations: 1000,
+      size: 250,
+      crossover: 0.5,
+      mutation: 0.1,
+      skip: 10
+    };
+    
+    var userData = {
+    };
+
+    genetic.evolve(config, userData);
+  }
 </script>
 </body>
 </html>

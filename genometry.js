@@ -154,7 +154,7 @@ var Genometry = {
       },
     };
   },
-  Painter: function(canvas) {
+  TrianglePainter: function(canvas) {
     var _context = canvas.getContext('2d');
     return {
       paint: function(triangle) {
@@ -164,6 +164,17 @@ var Genometry = {
         _context.lineTo(triangle.vertex(3).x, triangle.vertex(3).y);
         _context.fillStyle = "#" + triangle.color().value.toString(16);
         _context.fill();
+      }
+    };
+  },
+  ChromosomePainter: function(canvas) {
+    var _trianglePainter = Genometry.TrianglePainter(canvas);
+    return {
+      paint: function(chromosome) {
+        var triangles = chromosome.triangles();
+        for (var i = triangles.length - 1; i >= 0; i--) {
+          _trianglePainter.paint(triangles[i]);
+        }
       }
     };
   },
