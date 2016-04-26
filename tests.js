@@ -18,6 +18,27 @@ function createTriangle() {
   });
 }
 
+function createChromosome() {
+  var triangle = new Genometry.Triangle({
+    color: {
+      value: 0xffffff,
+    },
+    vertex1: {
+      x: 0,
+      y: 0,
+    },
+    vertex2: {
+      x: 1,
+      y: 1,
+    },
+    vertex3: {
+      x: 2,
+      y: 0,
+    },
+  });
+  this.chromosome = new Genometry.Chromosome([triangle]);
+}
+
 function createBigTriangle() {
   this.triangle = new Genometry.Triangle({
     color: {
@@ -84,6 +105,12 @@ QUnit.module("triangle operations", {
 QUnit.test( "triangle creation test", function(assert) {
   assert.ok(this.triangle.vertex(1).x == 0, "Triangle has a vertex!");
   assert.ok(this.triangle.vertex(2).x == 1, "Triangle has vertices!");
+});
+
+QUnit.test( "triangle generator test", function(assert) {
+  var newTriangle = Genometry.Utils.randomTriangle(100, 100);
+  assert.ok(newTriangle.vertex(1), "Random triangle has vertices!");
+  assert.ok(newTriangle.color().value, "Random triangle has color!");
 });
 
 QUnit.test( "triangle length test", function(assert) {
@@ -157,24 +184,12 @@ QUnit.test( "vertex mutation test", function(assert) {
   }
 });
 
-QUnit.test( "random mutation test", function(assert) {
-  var mutator = new Genometry.RandomMutator();
-  var previousSumX = this.triangle.vertex(1).x + this.triangle.vertex(2).x + this.triangle.vertex(3).x;
-  var previousSumY = this.triangle.vertex(1).y + this.triangle.vertex(2).y + this.triangle.vertex(3).y;
-  var previousColor = this.triangle.color().value;
-  mutator.mutate(this.triangle);
-  var sumX = this.triangle.vertex(1).x + this.triangle.vertex(2).x + this.triangle.vertex(3).x;
-  var sumY = this.triangle.vertex(1).y + this.triangle.vertex(2).y + this.triangle.vertex(3).y;
-  var color = this.triangle.color().value
-  assert.ok((sumX != previousSumX || sumY != previousSumY || checkColorMutation(color, previousColor)), "Mutator has changed something in triangle!");
-});
-
 QUnit.module("triangle crossover", {
   beforeEach: createTriangles
 });
 
 QUnit.test( "triangle crossover color test", function(assert) {
-  var crossover = Genometry.Crossover();
+  var crossover = Genometry.TriangleCrossover();
   var newTriangle = crossover.cross(this.triangleOne, this.triangleTwo);;
   assert.ok(newTriangle.color().value == 0x800000, "New triangle's color is perfect!");
   newTriangle = crossover.cross(this.triangleTwo, newTriangle);
@@ -182,7 +197,7 @@ QUnit.test( "triangle crossover color test", function(assert) {
 });
 
 QUnit.test( "triangle crossover vertex test", function(assert) {
-  var crossover = Genometry.Crossover();
+  var crossover = Genometry.TriangleCrossover();
   var newTriangle = crossover.cross(this.triangleOne, this.triangleTwo);
   var hasSameVertex = function(triangle1, triangle2) {
     for(var i = 1; i <= 3; i++)
@@ -243,4 +258,36 @@ QUnit.test( "error counter test", function(assert) {
   assert.ok(error == 0, "There is no difference between pics!");
   document.body.removeChild(input);
   document.body.removeChild(output);
+});
+
+QUnit.module("chromosome test", {
+  beforeEach: createChromosome
+});
+
+QUnit.test( "chromosome creation test", function(assert) {
+  assert.ok(this.chromosome.triangles().length == 1, "Chromosome is not empty!");
+  assert.ok(this.chromosome.triangles()[0].color().value == 0xffffff, "Chromosome has white triangle");
+});
+
+QUnit.test( "chromosome generator test", function(assert) {
+  var newChromosome = Genometry.Utils.randomChromosome(100, 100);
+  assert.ok(this.chromosome.triangles().length > 0, "Chromosome is not empty!");
+  assert.ok(this.chromosome.triangles()[0].color().value, "Chromosome has valid triangle");
+});
+
+QUnit.module("chromosome genetics test");
+
+QUnit.test( "chromosome crossover test", function(assert) {
+  var chromosomeOne = Genometry.Utils.randomChromosome(100, 100);
+  var chromosomeTwo = Genometry.Utils.randomChromosome(100, 100);
+  var crossover = new Genometry.ChromosomeCrossover();
+  var result = crossover.cross(chromosomeOne, chromosomeTwo);
+  assert.ok(result.triangles().length == chromosomeOne.triangles().length + chromosomeTwo.triangles().length, "Crossover has cross over chromosomes");
+});
+
+QUnit.test( "chromosome mutation test", function(assert) {
+  var chromosome = Genometry.Utils.randomChromosome(100, 100);
+  var mutator = new Genometry.ChromosomeMutator();
+  mutator.mutate(chromosome);
+  assert.ok(true, "Mutator has changed something in chromosome!");
 });

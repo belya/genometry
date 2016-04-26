@@ -1,7 +1,7 @@
 var Genometry = {
   Triangle: function(options) {
-    var color = options.color;
-    var vertices = [{
+    var _color = options.color;
+    var _vertices = [{
       x: options.vertex1.x,
       y: options.vertex1.y,
     }, {
@@ -13,7 +13,7 @@ var Genometry = {
     }];
     return {
       vertex: function(index) {
-        return vertices[index - 1];
+        return _vertices[index - 1];
       },
       length: function(index1, index2) {
         return Math.sqrt(Math.pow(this.vertex(index1).x - this.vertex(index2).x, 2) 
@@ -28,39 +28,47 @@ var Genometry = {
         return Math.sqrt(squaredSquare);
       },
       color: function() {
-        return color;
+        return _color;
       },
       compareVertices: function(triangle) {
         for(var i = 0; i < 3; i++)
-          if (triangle.vertex(i + 1).x != vertices[i].x || triangle.vertex(i + 1).y != vertices[i].y)
+          if (triangle.vertex(i + 1).x != _vertices[i].x || triangle.vertex(i + 1).y != _vertices[i].y)
             return false;
         return true;
       },
       compareColor: function(triangle) {
-        return (color.value == triangle.color().value);
+        return (_color.value == triangle.color().value);
       },
       compare: function(triangle) {
         return this.compareVertices(triangle) && this.compareColor(triangle);
       },
     };
   },
+  Chromosome: function(triangles) {
+    var _triangles = triangles;
+    return {
+      triangles: function() {
+        return _triangles;
+      }
+    };
+  },
   VertexMutator: function() {
-    var MAX_SHIFT = 5;
+    var _MAX_SHIFT = 5;
     return {
       mutate: function(triangle) {
         var index = Genometry.Utils.random(1, 3);
-        var shiftX = Genometry.Utils.randomSign() * Genometry.Utils.random(1, MAX_SHIFT);
-        var shiftY = Genometry.Utils.randomSign() * Genometry.Utils.random(1, MAX_SHIFT);
+        var shiftX = Genometry.Utils.randomSign() * Genometry.Utils.random(1, _MAX_SHIFT);
+        var shiftY = Genometry.Utils.randomSign() * Genometry.Utils.random(1, _MAX_SHIFT);
         triangle.vertex(index).x += shiftX;
         triangle.vertex(index).y += shiftY;
       }
     };
   },
   ColorMutator: function() {
-    var MAX_SHIFT = 10;
+    var _MAX_SHIFT = 10;
     return {
       mutate: function(triangle) {
-        var shift = Genometry.Utils.randomSign() * Genometry.Utils.random(1, MAX_SHIFT);
+        var shift = Genometry.Utils.randomSign() * Genometry.Utils.random(1, _MAX_SHIFT);
         triangle.color().value += shift;
         if (triangle.color().value > 0xffffff) 
           triangle.color().value = 0xffffff;
@@ -69,19 +77,39 @@ var Genometry = {
       }
     };
   },
-  RandomMutator: function() {
-    var vertexMutator = new Genometry.VertexMutator();
-    var colorMutator  = new Genometry.ColorMutator();
+  ChromosomeMutator: function(width, height) {
+    var _width = width;
+    var _height = height;
+    var _vertexMutator = new Genometry.VertexMutator();
+    var _colorMutator  = new Genometry.ColorMutator();
+    var _modifyTriangle = function(chromosome) {
+      var index = Genometry.Utils.random(0, chromosome.triangles().length - 1);
+      if (Math.random > 0.5)
+        _vertexMutator.mutate(chromosome.triangles()[index]);
+      else
+        _colorMutator.mutate(chromosome.triangles()[index]);
+    }
+    var _addTriangle = function(chromosome) {
+      var triangle = Genometry.Utils.randomTriangle(_width, _height);
+      chromosome.triangles().push(triangle);
+    }
+    var _deleteTriangle = function(chromosome) {
+      var index = Genometry.Utils.random(0, chromosome.triangles().length - 1);
+      chromosome.triangles().splice(index, 1);
+    }
     return {
-      mutate: function(triangle) {
-        if (Math.random() > 0.5)
-          vertexMutator.mutate(triangle)
+      mutate: function(chromosome) {
+        var random = Math.random();
+        if (random > 0.5)
+          _modifyTriangle(chromosome);
+        else if (random > 0.25)
+          _deleteTriangle(chromosome);
         else
-          colorMutator.mutate(triangle);
+          _addTriangle(chromosome);
       }
     }
   },
-  Crossover: function() {
+  TriangleCrossover: function() {
     return {
       cross: function(triangleOne, triangleTwo) {
         var mixedColor = (triangleOne.color().value + triangleTwo.color().value) / 2;
@@ -112,28 +140,42 @@ var Genometry = {
       }
     }
   },
+  ChromosomeCrossover: function() {
+    var _triangleCrossover = Genometry.TriangleCrossover();
+    return {
+      cross: function(chromosomeOne, chromosomeTwo) {
+        return new Genometry.Chromosome(chromosomeTwo.triangles().concat(chromosomeOne.triangles()));
+        // var mixedNumber = Genometry.Utils.random(0, chromosome.triangles().length);
+        // for(var i = 0; i < mixedNumber; i++) {
+        //   var index1 =;
+        //   var index2 =;
+
+        // }
+      },
+    };
+  },
   Painter: function(canvas) {
-    var context = canvas.getContext('2d');
+    var _context = canvas.getContext('2d');
     return {
       paint: function(triangle) {
-        context.beginPath();
-        context.moveTo(triangle.vertex(1).x, triangle.vertex(1).y);
-        context.lineTo(triangle.vertex(2).x, triangle.vertex(2).y);
-        context.lineTo(triangle.vertex(3).x, triangle.vertex(3).y);
-        context.fillStyle = "#" + triangle.color().value.toString(16);
-        context.fill();
+        _context.beginPath();
+        _context.moveTo(triangle.vertex(1).x, triangle.vertex(1).y);
+        _context.lineTo(triangle.vertex(2).x, triangle.vertex(2).y);
+        _context.lineTo(triangle.vertex(3).x, triangle.vertex(3).y);
+        _context.fillStyle = "#" + triangle.color().value.toString(16);
+        _context.fill();
       }
     };
   },
   ErrorCounter: function(canvas) {
-    var context = canvas.getContext('2d');
-    var width = canvas.width;
-    var height = canvas.height;
+    var _context = canvas.getContext('2d');
+    var _width = canvas.width;
+    var _height = canvas.height;
     return {
       count: function(canvas) {
         var error = 0;
         var anotherContext = canvas.getContext('2d');
-        var imageData = context.getImageData(0, 0, width, height);
+        var imageData = _context.getImageData(0, 0, _width, _height);
         var anotherImageData = anotherContext.getImageData(0, 0, canvas.width, canvas.height);
         for(var i = 0; i < imageData.data.length; i++) {
           if (anotherImageData.data.length <= i) break;
@@ -149,6 +191,32 @@ var Genometry = {
     },
     randomSign: function() {
       return (Math.random() > 0.5) ? 1 : -1;
+    },
+    randomTriangle: function(width, height) {
+      return new Genometry.Triangle({
+        color: {
+          value: Genometry.Utils.random(0, 0xffffff),
+        },
+        vertex1: {
+          x: Genometry.Utils.random(-width, width),
+          y: Genometry.Utils.random(-height, height),
+        },
+        vertex2: {
+          x: Genometry.Utils.random(-width, width),
+          y: Genometry.Utils.random(-height, height),
+        },
+        vertex3: {
+          x: Genometry.Utils.random(-width, width),
+          y: Genometry.Utils.random(-height, height),
+        }
+      });
+    },
+    randomChromosome: function(width, height) {
+      var triangles = [];
+      var length = Genometry.Utils.random(1, 10);
+      for(var i = 0; i < length; i++)
+        triangles.push(Genometry.Utils.randomTriangle(width, height));
+      return new Genometry.Chromosome(triangles);
     },
   }
 }
