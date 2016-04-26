@@ -130,12 +130,18 @@ QUnit.test( "random sign test", function(assert) {
   }
 });
 
+function checkColorMutation(color, previousColor) {
+  return color != previousColor || color == 0xffffff || color == 0x000000;
+}
+
 QUnit.test( "color mutation test", function(assert) {
   var mutator = new Genometry.ColorMutator();
   for(var i = 0; i < 100; i++) {
     var previousColor = this.triangle.color().value;
     mutator.mutate(this.triangle);
-    assert.ok(this.triangle.color().value != previousColor, "Mutator changes color of a triangle!");
+    var color = this.triangle.color().value;
+    assert.ok(checkColorMutation(color, previousColor), "Mutator has changed color of a triangle!");
+    assert.ok(color <= 0xffffff && color >= 0x000000, "Triangle has valid color!");
   }
 });
 
@@ -147,8 +153,20 @@ QUnit.test( "vertex mutation test", function(assert) {
     mutator.mutate(this.triangle);
     var sumX = this.triangle.vertex(1).x + this.triangle.vertex(2).x + this.triangle.vertex(3).x;
     var sumY = this.triangle.vertex(1).y + this.triangle.vertex(2).y + this.triangle.vertex(3).y;
-    assert.ok((sumX != previousSumX && sumY != previousSumY), "Mutator changes a vertex in triangle!");
+    assert.ok((sumX != previousSumX && sumY != previousSumY), "Mutator has changed a vertex in triangle!");
   }
+});
+
+QUnit.test( "random mutation test", function(assert) {
+  var mutator = new Genometry.RandomMutator();
+  var previousSumX = this.triangle.vertex(1).x + this.triangle.vertex(2).x + this.triangle.vertex(3).x;
+  var previousSumY = this.triangle.vertex(1).y + this.triangle.vertex(2).y + this.triangle.vertex(3).y;
+  var previousColor = this.triangle.color().value;
+  mutator.mutate(this.triangle);
+  var sumX = this.triangle.vertex(1).x + this.triangle.vertex(2).x + this.triangle.vertex(3).x;
+  var sumY = this.triangle.vertex(1).y + this.triangle.vertex(2).y + this.triangle.vertex(3).y;
+  var color = this.triangle.color().value
+  assert.ok((sumX != previousSumX || sumY != previousSumY || checkColorMutation(color, previousColor)), "Mutator has changed something in triangle!");
 });
 
 QUnit.module("triangle crossover", {
@@ -169,8 +187,8 @@ QUnit.test( "triangle crossover vertex test", function(assert) {
   var hasSameVertex = function(triangle1, triangle2) {
     for(var i = 1; i <= 3; i++)
       for(var j = 1; j <= 3; j++) {
-        if (triangle1.vertex(i).x == triangle2.vertex(i).x
-         && triangle1.vertex(i).y == triangle2.vertex(i).y) 
+        if (triangle1.vertex(i).x == triangle2.vertex(j).x
+         && triangle1.vertex(i).y == triangle2.vertex(j).y) 
           return true;
       }
     return false;
@@ -178,8 +196,12 @@ QUnit.test( "triangle crossover vertex test", function(assert) {
   var verticesCondition = hasSameVertex(newTriangle, this.triangleOne) && hasSameVertex(newTriangle, this.triangleTwo);
   var squareSum = Math.round(this.triangleOne.square() + this.triangleTwo.square());
   var squareCondition = Math.round(newTriangle.square()) == squareSum;
+  console.log(newTriangle.vertex(1));
+  console.log(newTriangle.vertex(2));
+  console.log(newTriangle.vertex(3));
+  console.log(newTriangle.square());
   assert.ok(verticesCondition, "New triangle has vertices from his parents!");
-  assert.ok(squareCondition, "New triangle's square are perfect!");
+  assert.ok(squareCondition, "New triangle's square is perfect!");
 });
 
 QUnit.module("triangle painter");

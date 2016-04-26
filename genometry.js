@@ -62,8 +62,24 @@ var Genometry = {
       mutate: function(triangle) {
         var shift = Genometry.Utils.randomSign() * Genometry.Utils.random(1, MAX_SHIFT);
         triangle.color().value += shift;
+        if (triangle.color().value > 0xffffff) 
+          triangle.color().value = 0xffffff;
+        if (triangle.color().value < 0x000000)
+          triangle.color().value = 0x000000;
       }
     };
+  },
+  RandomMutator: function() {
+    var vertexMutator = new Genometry.VertexMutator();
+    var colorMutator  = new Genometry.ColorMutator();
+    return {
+      mutate: function(triangle) {
+        if (Math.random() > 0.5)
+          vertexMutator.mutate(triangle)
+        else
+          colorMutator.mutate(triangle);
+      }
+    }
   },
   Crossover: function() {
     return {
@@ -71,19 +87,28 @@ var Genometry = {
         var mixedColor = (triangleOne.color().value + triangleTwo.color().value) / 2;
         var firstVertex = triangleOne.vertex(Genometry.Utils.random(1, 3));
         var secondVertex = triangleTwo.vertex(Genometry.Utils.random(1, 3));
-        var thirdVertexX = 0;
-        var thirdVertexY = 0;
-        return new Genometry.Triangle({
+        var resultSquare = triangleOne.square() + triangleTwo.square();
+        var triangle = new Genometry.Triangle({
           color: {
             value: Math.round(mixedColor)
           },
           vertex1: firstVertex,
           vertex2: secondVertex,
-          vertex3: {
-            x: thirdVertexX,
-            y: thirdVertexY
-          },
+          vertex3: {x: 0, y: 0},
         });
+        if (firstVertex.x != secondVertex.x && firstVertex.y != secondVertex.y) {
+          var length = resultSquare * 2 / triangle.length(1, 2);
+          var baseVectorX = Math.abs(triangle.vertex(1).x, triangle.vertex(2).x);
+          var baseVectorY = Math.abs(triangle.vertex(1).y, triangle.vertex(2).y);
+          var halfX = baseVectorX / 2 + Math.min(triangle.vertex(1).x, triangle.vertex(2).x);
+          var halfY = baseVectorY / 2 + Math.min(triangle.vertex(1).y, triangle.vertex(2).y);
+          var cosOY = baseVectorY / triangle.length(1, 2);
+          var angle = Math.acos(cosOY);
+          triangle.vertex(3).x = halfX + Math.cos(angle) * length;
+          triangle.vertex(3).y = halfY - Math.sin(angle) * length;
+        }
+        return triangle;
+
       }
     }
   },
@@ -123,7 +148,7 @@ var Genometry = {
       return Math.floor(Math.random() * (max - min + 1) + min);
     },
     randomSign: function() {
-      return (Math.random() > 0.5)?1:-1;
+      return (Math.random() > 0.5) ? 1 : -1;
     },
   }
 }
