@@ -288,12 +288,12 @@ QUnit.test( "error counter test", function(assert) {
   document.body.appendChild(output);
   output.width = 100;
   output.height = 100;
-  var counter = Genometry.ErrorCounter(input);
-  var error = counter.count(output);
+  var counter = Genometry.ErrorCounter(input, output);
+  var error = counter.count();
   assert.ok(error != 0, "There is a sufficient difference between pics!");
   output.getContext('2d').fillStyle = "#FF0000";
   output.getContext('2d').fillRect(0, 0, 100, 100);
-  error = counter.count(output);
+  error = counter.count();
   assert.ok(error == 0, "There is no difference between pics!");
   document.body.removeChild(input);
   document.body.removeChild(output);

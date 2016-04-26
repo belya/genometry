@@ -25,22 +25,23 @@
   genetic.select2 = Genetic.Select2.Tournament2;
 
   genetic.seed = function() {
-    return Genometry.Utils.randomChromosome(width, height);
+    var Genometry = this.userData.Genometry;
+    return Genometry.Utils.randomChromosome(this.userData.width, this.userData.height);
   };
 
   genetic.mutate = function(chromosome) {
-    mutator.mutate(chromosome);
+    this.userData.mutator.mutate(chromosome);
     //WTF
     return chromosome;
   };
 
   genetic.crossover = function(mother, father) {
-    return [crossover.cross(mother, father)];
+    return [this.userData.crossover.cross(mother, father), this.userData.crossover.cross(mother, father)];
   };
 
   genetic.fitness = function(chromosome) {
-    painter.paint(chromosome);
-    return counter.count(output);
+    this.userData.painter.paint(chromosome);
+    return this.userData.counter.count(output);
   };
 
   genetic.generation = function(pop, generation, stats) {
@@ -72,6 +73,13 @@
     };
     
     var userData = {
+      width: width,
+      height: height,
+      Genometry: Genometry,
+      mutator: mutator,
+      crossover: crossover,
+      painter: painter,
+      counter: counter
     };
 
     genetic.evolve(config, userData);

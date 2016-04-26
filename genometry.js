@@ -178,19 +178,19 @@ var Genometry = {
       }
     };
   },
-  ErrorCounter: function(canvas) {
-    var _context = canvas.getContext('2d');
-    var _width = canvas.width;
-    var _height = canvas.height;
+  ErrorCounter: function(input, output) {
+    var _input = input
+    var _output = output;
     return {
-      count: function(canvas) {
+      count: function() {
         var error = 0;
-        var anotherContext = canvas.getContext('2d');
-        var imageData = _context.getImageData(0, 0, _width, _height);
-        var anotherImageData = anotherContext.getImageData(0, 0, canvas.width, canvas.height);
-        for(var i = 0; i < imageData.data.length; i++) {
-          if (anotherImageData.data.length <= i) break;
-          error += Math.pow(imageData.data[i] - anotherImageData.data[i], 2) / 2;
+        var inputContext = _input.getContext('2d');
+        var outputContext = _output.getContext('2d');
+        var inputImageData = inputContext.getImageData(0, 0, _input.width, _input.height);
+        var outputImageData = outputContext.getImageData(0, 0, _output.width, _output.height);
+        for(var i = 0; i < inputImageData.data.length; i++) {
+          if (outputImageData.data.length <= i) break;
+          error += Math.pow(inputImageData.data[i] - outputImageData.data[i], 2) / 2;
         }
         return error;
       }
